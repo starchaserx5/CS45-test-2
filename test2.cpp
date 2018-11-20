@@ -15,7 +15,7 @@
 #include <iterator>
 #include <map>
 #include <utility>
-#include <math.h>
+#include <cmath>
 
 using namespace std;
 
