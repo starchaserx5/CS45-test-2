@@ -1,3 +1,9 @@
+/*
+  CS45 DISCRETE STRUCTURES WITH COMPUTER SCIENCE APPLICATIONS
+  Professor PAUL WILKINSON
+  Tom Nguyen
+  Test 2
+*/
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -9,8 +15,7 @@
 #include <iterator>
 #include <map>
 #include <utility>
-#include <cmath>
-#include <vector>
+#include <math.h>
 
 using namespace std;
 
@@ -31,11 +36,11 @@ void removeSpace(string& input);
 bool helpCommand(string input);
 bool checkFileName(string fileName);
 bool saveHelper(string fileName, int sets[],bool& checkSaved);
-bool setCommand(string &input, int sets[],bool& isEmpty);
+// bool setCommand(string &input, int sets[],bool& isEmpty);
 bool setHelper(string& input,unsigned int& setNum);
 bool saveCommand(int sets[], string& input,bool& checkSaved,bool& isEmpty);
-void loadHelper(int sets[],string fileName,bool& isEmpty);
-bool loadCommand(int sets[], string input,bool& isEmpty);
+void loadHelper(int sets[],string fileName,bool& isEmpty,bool& hasSaved);
+bool loadCommand(int sets[], string input,bool& isEmpty,bool& hasSaved);
 void showHelper(const int &num, map<int, string> uniSet);
 bool showCommand(int *sets,string input,map<int,string> uniSet);
 void forwardUniverse(map<string,int>& uniSet);
@@ -47,23 +52,17 @@ bool checkEqualSet(string setA,string setB,int sets[]);
 void saveFile(string fileName,int sets[],bool& hasSaved);
 void exitCommand(int sets[],bool hasSaved,bool isEmpty);
 bool listCommand(int *sets, string input, map<int, string> uniSet);
-bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty);
-void transferToCPPString(string* &list, int qty, char* input[]);
-void display(string *list, int qty, string &input);
-void displayFileNames(string &input);
-void editedTextFunc(ifstream &inStream, string &input);
-bool cmdLineOptions(int qty, char* input[], string *&list, vector<string> &v);
-bool readFromFile(vector<string> &v, const string c);
-bool checkFile(ifstream &inStream);
+bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,bool& checkSaved);
+bool userInputFile(string ans);
+bool question(string title);
+
 
 
 int main(int argc, char* argv[])
 {
-    string *list, line, output;            //Create input (line) and output (output) variables for functions to use
+
+    string line, output;            //Create input (line) and output (output) variables for functions to use
     int sets[26] = {};              //Create a 26 element array of sets
-    vector<string> expList;
-    expList.resize(26);
-    ifstream inStream;
     map<string, int> uniSet;        //forward Set color to nums
     map<int, string> revSet;        //Numbers to color
     forwardUniverse(uniSet);        //map an array of colors string to an array of number
@@ -74,12 +73,28 @@ int main(int argc, char* argv[])
     for(int i=0;i<26;++i)          //intial value for each setset
         sets[i]= -1;
 
-    if(cmdLineOptions(argc, argv, list, expList))
+    /*  Using argv and argc to load a file
+        User must be enter the name of program to run
+        follow with LOAD command and fileName.
+    */
+    if(argc>1 && argc <=3)
     {
-        cout << "argc :" << argc << endl;
-        cout << "argv :" << argv << endl;
-        cout << "list :" << list << endl;
+        //convert LOAD command to upper.
+        string loadCommand(argv[1]);
+        transform(loadCommand.begin(), loadCommand.end(), loadCommand.begin(), ::toupper);
+        if(!(loadCommand == "LOAD"))
+            cout << "LOAD command invalid."<<endl;
+        else if (argv[2] == nullptr)
+            cout << "Mising the fileName."<<endl;
+        else
+        {
+            string fileName(argv[2]);       //get fileName
+            transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
+            loadHelper(sets,fileName,isEmpty,hasSaved);
+        }
     }
+    else if(argc>3)
+        cout<<"Only accept one file at a time."<<endl;
 
     do
     {
@@ -105,97 +120,6 @@ int main(int argc, char* argv[])
         }
     }while(inputCheck);           //As long as there is input from the keyboard
     return 0;
-}
-
-bool cmdLineOptions(int qty, char* input[], string *&list, vector<string> &v)
-{
-    ifstream in;
-    //argv to c++ string
-    transferToCPPString(list, qty, input);
-
-    if(qty == 3)
-    {
-        bool open = readFromFile(v,list[0]);
-        return open;
-    }
-    else
-    {
-        cout << "File doesn't exist or something..." << endl;
-        delete list;
-        return false;
-    }
-}
-
-bool readFromFile(vector<string> &v, const string c)
-{
-    ifstream inStream;
-    unsigned int found;
-    string s = c;
-    //http://www.cplusplus.com/reference/string/string/find/
-
-    found = s.find(".txt");
-    if(found == string::npos)
-        s = s + ".txt";
-    if(c.empty())
-    {
-        cout << "Empty" << endl;
-        return false;
-    }
-
-    inStream.open(s);
-    if(checkFile(inStream))
-    {
-        for(vector<string>::iterator it = v.begin(); it < v.end(); ++it)
-        {
-            inStream >> v[it - v.begin()];
-            cout << v[it - v.begin()];
-        }
-    }
-    inStream.close();
-    return true;
-}
-
-bool checkFile(ifstream &inStream)
-{
-    if(inStream.fail())
-    {
-        cout << "Input file opening failed. \n";
-        exit(1);
-    }
-
-    return true;
-}
-
-void transferToCPPString(string* &list, int qty, char* input[])
-{
-    list = new string[qty];
-    for(int i = 0; i < qty; ++i)
-        list[i] = input[i];
-}
-
-void display(string *list, int qty, string &input)
-{
-    int pos;
-    ofstream outStream;
-    input = "";
-
-    cout<<"There were "<<qty<<" elements on the command line. They are:"<<endl;
-
-    for(int i = 0; i < qty; ++i)
-    {
-        if((pos = list[i].find("/i=")) < list[i].size())
-        {
-            input = list[i].substr(pos + 3);
-        }
-
-        cout<<"argv["<<i<<"] = "<<list[i]<<" has "<<list[i].size()<<" characters"<<endl;
-    }
-}
-
-void displayFileNames(string &input)
-{
-    if(input != "")
-        cout<<"Input file name is "<<input<<endl;
 }
 
 bool getInput(string &line)
@@ -377,6 +301,7 @@ bool process(string rpn, int sets[], int index, map<string, int> uniSet) //Proce
     }
     //assign the elements to a set with index
     sets[index] = result;
+    return true;
 }
 
 
@@ -519,7 +444,7 @@ unsigned int setCompliment(string x, string &output, int sets[])
     @equalPos: return the position of "=" sign if there is "SET" command
 */
 
-bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty)
+bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty,bool& checkSaved)
 {
     //remove spaces trailing leading space
     removeSpace(input);
@@ -527,13 +452,16 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty)
     unsigned int posSet = input.find("SET");
     unsigned int posEqual = input.find("=");
     unsigned int openBracket = input.find("{");
-    unsigned int closeBracket = input.find("{");
+    unsigned int closeBracket = input.find("}");
+    unsigned int cAlternative;                       //check if aternative entry appear
+    int index = -1; //index of a set
     string output = ""; //result after process RPN expression
     string strSet = "";
-    int index = -1; //index of a set
+    string expression = input.substr(posEqual+1);
+    removeSpace(expression);
 
     //  get a letter of a SET command
-    if (posSet < input.size() && posEqual < input.size())
+    if(posSet < input.size() && posEqual < input.size())
     {
         // get a string between SET command and "=" sign
         strSet = input.substr(posSet + 3, posEqual + 1);
@@ -555,29 +483,34 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty)
         return false;   //invalid command
 
     //Aternative entry of sets, NOT include "{"
-    if (openBracket > input.size() || closeBracket > input.size())
+    if ((openBracket > input.size() || closeBracket > input.size()))
     {
-        string expression = input.substr(posEqual+1);
-        removeSpace(expression);
-        unsigned int setNum ;
-        //only numbers are allowed
-        if(expression.find_first_not_of("0123456789") < expression.size())
-            return false;
-        try
-        {
-            setNum= stoi(expression);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() <<"Should be a number."<< '\n';
-        }
+        unsigned int check1 = expression.find_first_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ+*\\");
+        unsigned int check2 = expression.find_first_of("0123456789");
+        unsigned int setNum;
+        if(check1 < expression.size() && check2 < expression.size())
+            return false;       //invalid command, numbers and letters can be mixed
 
-        if(stoi(expression) > pow(2,16))
-            return false;               //not beyond 16-bit
-        else
+        //if entry is an alternative of sets
+        //only numbers are allowed
+        if(check1 > expression.size() && check2 < expression.size())
+        {
+            try
+            {
+                setNum = stoi(expression);
+            }
+            catch(const exception &e)
+            {
+                cout<< "The number is out of range. Only accept up to 16-bit." << '\n';
+            }
+            // if (setNum > pow(2, 16))
+            //     return false; //not beyond 16-bit
+            // else
             sets[index] = setNum;
-        isEmpty = false;    //at least 1 set existed
-        return true;    //valid alternative entry of a set
+            isEmpty = false; //at least 1 set existed
+            checkSaved = false;//need to save before exiting
+            return true;     //valid alternative entry of a set
+        }
     }
 
     input = input.substr(posEqual+1); // get the right expression
@@ -585,7 +518,7 @@ bool setCommand(string &input, int sets[],map<string,int> uniSet,bool& isEmpty)
         return false;
     process(output,sets,index,uniSet);
     isEmpty = false;                //turn on Check Empty set
-
+    checkSaved = false;//need to save before exiting
     return true;  //valid command
 }
 
@@ -596,15 +529,10 @@ bool oldSetCommand(string &input, int sets[], map<string, int> uniSet, bool &isE
 
     unsigned int posSet = input.find("SET");
     unsigned int posEqual = input.find("=");
-    unsigned int openBracket = input.find("{");
-    unsigned int closeBracket = input.find("{");
     string output = ""; //result after process RPN expression
     string strSet = "";
     int index = -1; //index of a set
-    //Aternative entry of sets, NOT include "{"
-    if (openBracket > input.size() || closeBracket < input.size())
-    {
-    }
+
 
     //  SET command
     if (posSet < input.size() && posEqual < input.size())
@@ -800,10 +728,11 @@ bool commandInput(string &input, int sets[], map<string, int> uniSet,map<int,str
     if(!commandHelper(input,index))
         return false;
 
-    switch(index)
+
+    switch (index)
     {
         case 0:
-            return setCommand(input,sets,uniSet,isEmpty);
+            return setCommand(input,sets,uniSet,isEmpty,hasSaved);
         case 1:
             return saveCommand(sets,input,hasSaved,isEmpty);
         case 2:
@@ -811,7 +740,7 @@ bool commandInput(string &input, int sets[], map<string, int> uniSet,map<int,str
         case 3:
             return showCommand(sets,input,revSet);
         case 4:
-            return loadCommand(sets,input,isEmpty);
+            return loadCommand(sets,input,isEmpty,hasSaved);
         case 5:
             return isCommand(sets,input);
         case 6:
@@ -872,6 +801,23 @@ bool saveCommand(int sets[],string& input,bool& checkSaved,bool& isEmpty)
     // return true;
 }
 
+bool userInputFile(string ans)
+{
+    getline(cin,ans);
+    transform(ans.begin(),ans.end(),ans.begin(),::toupper);         //convert to upper case
+    return (ans == "Y" || ans == "YES");
+}
+
+bool question(string title)
+{
+    string line;
+    cout << title;
+    getline(cin, line);
+    transform(line.begin(), line.end(), line.begin(), ::toupper);
+
+    return line[0] == 'Y';
+}
+
 
 //Create a new file
 //if file already exists, overwrite it or give another file name
@@ -887,58 +833,47 @@ bool saveHelper(string fileName, int sets[],bool& hasSaved)
     {
         cout << "File already exists" << endl;
         //erase file
-        cout << "Would you like to erase the file(Y/N): ";
-        getline(cin,ans);
-        transform(ans.begin(),ans.end(),ans.begin(),::toupper);         //convert to upper case
-        if(ans == "Y" || ans == "YES")
+        if(question("Would you like to overwrite file(Y/N): "))
         {
             remove(fileName.c_str());                                   //remove the file
-            cout << "Old file is removed succesfully." << endl;
+            cout << "Old file is overwritten succesfully." << endl;
             saveFile(fileName,sets,hasSaved);                                    //write a new file
             return true;
         }
-        else
+        else if(question("Would you like to rename file(Y/N): "))
         {
-            cout << "Would you like to give another file name(Y/N): ";
+            cout << "Enter new file name: " << endl;
             getline(cin, ans);
+            removeSpace(ans);
             transform(ans.begin(), ans.end(), ans.begin(), ::toupper);
-            if (ans == "Y" || ans == "YES")
+            //check extension missing
+            while(checkFileName(ans))
             {
-                cout << "Enter new file name: " << endl;
+                cout << "File already exists. Please enter another name:" << endl;
                 getline(cin, ans);
-                removeSpace(ans);
-                transform(ans.begin(), ans.end(), ans.begin(), ::toupper);
-                //check extension missing
-                while(checkFileName(ans))
-                {
-                    cout << "File already exists. Please enter another name:" << endl;
-                    getline(cin, ans);
-                }
-                rename(fileName.c_str(), ans.c_str());
-                cout << "File successfully renamed." << endl;
-                saveFile(fileName,sets,hasSaved);                        //write a new file
-                return true;
             }
-            else
-            {
-                //remove old file and write a new file with samename
-                remove(fileName.c_str());
-                saveFile(fileName,sets,hasSaved);                        //write a new file
-                return true;
-            }
-        }
+            rename(fileName.c_str(), ans.c_str());
+            cout << "File successfully renamed." << endl;
+            return true;
+          }
+          else if(question("Would you like to erase the current file(Y/N): " ))
+          {
+            remove(fileName.c_str());
+            cout << "File successfully erased." << endl;
+            return true;
+          }
+          return true;
     }
     else
     {
         saveFile(fileName,sets,hasSaved);
         return true;
     }
-    return false;//failed to save the file
 }
 
 
 //LOAD command
-bool loadCommand(int sets[], string input,bool& isEmpty)
+bool loadCommand(int sets[], string input,bool& isEmpty,bool& hasSaved)
 {
     unsigned int pos = input.find("LOAD");
     string fileName = input.substr(pos + 4); //get fileName
@@ -948,14 +883,14 @@ bool loadCommand(int sets[], string input,bool& isEmpty)
         cout << "Missing the file name." << endl;
         return true;//invalid command
     }
-    loadHelper(sets,fileName,isEmpty);
+    loadHelper(sets,fileName,isEmpty,hasSaved);
     return true;
 }
 
 //check the file name
 //if  the file exist read through the text file.
 //token it by ";" delimeter and assign each number to an array element of sets[]
-void loadHelper(int sets[],string fileName,bool& isEmpty)
+void loadHelper(int sets[],string fileName,bool& isEmpty,bool& hasSaved)
 {
     string ans = "";
     removeSpace(fileName);
@@ -980,6 +915,7 @@ void loadHelper(int sets[],string fileName,bool& isEmpty)
                 sets[index++] = stoi(line);
             }
             isEmpty = false;                        //Turn off isEmpty
+            hasSaved = true;                        //Saved the current state
             cout<<"File already is already loaded."<<endl;
             opFile.close();
         }
@@ -1020,7 +956,6 @@ bool showCommand(int *sets, string input, map<int, string> uniSet)
         }
         return true;
     }
-    return false;    //command valid
 }
 
 //print list of expressions
@@ -1049,7 +984,6 @@ bool listCommand(int *sets, string input, map<int, string> uniSet)
         }
         return true;
     }
-    return false; //command valid
 }
 
 //map a set of colors to their corresponding number
@@ -1118,10 +1052,10 @@ bool uniHelper(string input, unsigned int &setNum, map<string, int> uniMap)
     if (pos < subSet.size())
     {
       string color = subSet.substr(0, pos);
-      int uniNum = uniMap[color];
-      if (uniNum < 0 || uniNum > 15)
+      int uniNum = uniMap[color];               //size of map will increase if the key doesn't match
+      if (uniMap.size()>16)
       {
-        cout << "Invalid Color in the universe" << endl;
+        cout << "Invalid Color in the universe. Please type HELP for more information." << endl;
         return false;
       }
       else
@@ -1220,11 +1154,8 @@ bool isCommand(int sets[],string input)
                     cout << "Set "<<setA<<" and Set "<<setB<<" NOT contains same elements."<<endl;
                   return true;
         default:  return false;
-                  break;
     }
-    return false;   //invalid command
 }
-
 
 /*
     Create a file with fileName,
