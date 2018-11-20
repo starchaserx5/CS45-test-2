@@ -1,7 +1,7 @@
 /*
   CS45 DISCRETE STRUCTURES WITH COMPUTER SCIENCE APPLICATIONS
   Professor PAUL WILKINSON
-  Tom Nguyen
+  Tom Nguyen and Kyle Benalcazar
   Test 2
 */
 #include <iostream>
